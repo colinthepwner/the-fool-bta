@@ -1,0 +1,15 @@
+.gradle/
+.idea/
+.vscode/
+bin/
+build/
+out/
+run/
+run-server/
+logs/
+
+# local working notes, not for the repo
+NOTES.md
+
+# local tooling, not for the repo
+tools/

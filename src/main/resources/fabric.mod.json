@@ -1,0 +1,39 @@
+{
+	"schemaVersion": 1,
+	"id": "foolmod",
+	"version": "${version}",
+	"name": "The Fool",
+	"description": "Adds the Fool: an extremely rare mob that turns up day or night to snuff your torches, rifle your chests, wall up your doors and put up hideous wool follies. Hits you once, then runs for cover and disappears the moment nobody is looking.",
+	"authors": [
+		"colin"
+	],
+	"contact": {
+		"homepage": "",
+		"sources": ""
+	},
+	"icon": "icon.png",
+	"license": "CC0-1.0",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"btai.foolmod.FoolMod"
+		],
+		"beforeGameStart": [
+			"btai.foolmod.FoolMod"
+		],
+		"afterGameStart": [
+			"btai.foolmod.FoolMod"
+		],
+		"initModels": [
+			"btai.foolmod.client.FoolModels"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=${fabricloader}",
+		"minecraft": "*",
+		"java": ">=${java}"
+	},
+	"suggests": {
+		"modmenu": ">=${modmenu}"
+	}
+}

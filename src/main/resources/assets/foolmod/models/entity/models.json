@@ -1,0 +1,8 @@
+{
+	"format_version": "1.0.0",
+	"renderers": {
+		"foolmod:fool": {
+			"main": "geometry.player.base.steve"
+		}
+	}
+}

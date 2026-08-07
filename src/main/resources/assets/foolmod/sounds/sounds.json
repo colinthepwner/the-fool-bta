@@ -1,0 +1,14 @@
+{
+	"mob.fool.idle": {
+		"subtitle": "subtitles.foolmod.fool.idle",
+		"sounds": [
+			"mob/fool/idle.ogg"
+		]
+	},
+	"mob.fool.hit": {
+		"subtitle": "subtitles.foolmod.fool.hit",
+		"sounds": [
+			"mob/fool/hit.ogg"
+		]
+	}
+}
