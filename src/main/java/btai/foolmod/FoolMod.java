@@ -1,8 +1,12 @@
 package btai.foolmod;
 
+import btai.foolmod.block.FoolBlocks;
+import btai.foolmod.command.FoolCommand;
 import btai.foolmod.entity.FoolEntity;
+import btai.foolmod.item.FoolItems;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.data.registry.Registries;
+import net.minecraft.core.net.command.CommandManager;
 import net.minecraft.core.data.registry.Registry;
 import net.minecraft.core.entity.SpawnListEntry;
 import net.minecraft.core.enums.MobCategory;
@@ -14,18 +18,31 @@ import org.slf4j.LoggerFactory;
 import turniplabs.halplibe.HalpLibe;
 import turniplabs.halplibe.helper.EntityHelper;
 import turniplabs.halplibe.util.GameStartEntrypoint;
+import turniplabs.halplibe.util.BlockInitEntrypoint;
+import turniplabs.halplibe.util.ItemInitEntrypoint;
 
-public class FoolMod implements ModInitializer, GameStartEntrypoint {
+public class FoolMod implements ModInitializer, GameStartEntrypoint, BlockInitEntrypoint, ItemInitEntrypoint {
 
 	public static final String MOD_ID = HalpLibe.registerMod("foolmod", true);
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	public static final int SPAWN_WEIGHT = 1;
+	public static final int SPAWN_WEIGHT = 8;
 
 	@Override
 	public void onInitialize() {
 		new EntityHelper().createEntity(FoolEntity.class, NamespaceID.getPermanent(MOD_ID, "fool"), FoolEntity::new);
+		CommandManager.registerCommand(new FoolCommand());
 		LOGGER.info("The Fool is abroad.");
+	}
+
+	@Override
+	public void afterBlockInit() {
+		FoolBlocks.register();
+	}
+
+	@Override
+	public void afterItemInit() {
+		FoolItems.register();
 	}
 
 	@Override

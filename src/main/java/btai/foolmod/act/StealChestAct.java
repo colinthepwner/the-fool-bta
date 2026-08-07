@@ -51,7 +51,8 @@ public class StealChestAct implements FoolAct {
 	private int[] findChest(FoolEntity fool) {
 		int[] found = fool.findNearestBlock(chestIds(), SEARCH_RADIUS, SEARCH_VERTICAL, skip);
 
-		while (found != null && fool.containerAt(found[0], found[1], found[2]) == null) {
+		while (found != null && (fool.containerAt(found[0], found[1], found[2]) == null
+				|| fool.isWardedCell(found[0], found[1], found[2]))) {
 			skip.add(FoolPathfinder.packKey(found[0], found[1], found[2]));
 			found = fool.findNearestBlock(chestIds(), SEARCH_RADIUS, SEARCH_VERTICAL, skip);
 		}

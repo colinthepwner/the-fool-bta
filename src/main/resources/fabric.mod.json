@@ -18,6 +18,12 @@
 		"main": [
 			"btai.foolmod.FoolMod"
 		],
+		"afterBlockInit": [
+			"btai.foolmod.FoolMod"
+		],
+		"afterItemInit": [
+			"btai.foolmod.FoolMod"
+		],
 		"beforeGameStart": [
 			"btai.foolmod.FoolMod"
 		],

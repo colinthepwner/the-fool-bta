@@ -9,14 +9,19 @@ import org.junit.jupiter.api.Test;
 
 public class FleeScoringTest {
 
-	private static final double FOOL_X = 10, FOOL_Z = 0;
+	private static final double FOOL_X = 10, FOOL_Y = 64, FOOL_Z = 0;
 	private static final double PLAYER_X = 0, PLAYER_Z = 0;
 	private static final double HEAD_X = 1, HEAD_Z = 0;
 	private static final double CUR_DIST = 10;
 
 	private static double score(double candX, double candZ, int radius, boolean hidden, boolean incumbent) {
-		return FoolEntity.coverScore(FOOL_X, FOOL_Z, PLAYER_X, PLAYER_Z, HEAD_X, HEAD_Z,
-				candX, candZ, CUR_DIST, radius, hidden, incumbent);
+		return scoreAt(candX, FOOL_Y, candZ, radius, hidden, incumbent);
+	}
+
+	private static double scoreAt(double candX, double candY, double candZ, int radius,
+			boolean hidden, boolean incumbent) {
+		return FoolEntity.coverScore(FOOL_X, FOOL_Y, FOOL_Z, PLAYER_X, PLAYER_Z, HEAD_X, HEAD_Z,
+				candX, candY, candZ, CUR_DIST, radius, hidden, incumbent);
 	}
 
 	@Test
@@ -33,10 +38,29 @@ public class FleeScoringTest {
 	@DisplayName("a spot that gives ground back to the pursuer is rejected")
 	public void rejectsBacksliding() {
 
-		double s = FoolEntity.coverScore(FOOL_X, FOOL_Z, PLAYER_X, PLAYER_Z, 0, 0,
-				2.0, 0.0, CUR_DIST, 8, true, false);
+		double s = FoolEntity.coverScore(FOOL_X, FOOL_Y, FOOL_Z, PLAYER_X, PLAYER_Z, 0, 0,
+				2.0, FOOL_Y, 0.0, CUR_DIST, 8, true, false);
 		assertEquals(Double.NEGATIVE_INFINITY, s,
 				"running toward your pursuer to reach cover is how you get caught");
+	}
+
+	@Test
+	@DisplayName("a hiding place up a cliff is rejected, however good the cover")
+	public void rejectsUnreachableClimbs() {
+
+		assertEquals(Double.NEGATIVE_INFINITY, scoreAt(FOOL_X + 9, FOOL_Y + 8, FOOL_Z, 9, true, false),
+				"an eight-block climb needs scaffolding, which means standing still while being chased");
+		assertEquals(Double.NEGATIVE_INFINITY, scoreAt(FOOL_X + 9, FOOL_Y - 12, FOOL_Z, 9, true, false),
+				"a twelve-block drop is a fall, not an escape route");
+	}
+
+	@Test
+	@DisplayName("a small step up is still allowed, and level ground still preferred")
+	public void mildSlopesAreFine() {
+		double level = scoreAt(FOOL_X + 9, FOOL_Y, FOOL_Z, 9, false, false);
+		double slight = scoreAt(FOOL_X + 9, FOOL_Y + 2, FOOL_Z, 9, false, false);
+		assertTrue(slight > Double.NEGATIVE_INFINITY, "a two-block step should remain reachable");
+		assertTrue(level > slight, "with cover equal, flat ground should beat a slope");
 	}
 
 	@Test
@@ -80,8 +104,16 @@ public class FleeScoringTest {
 	@DisplayName("alignment with the heading is rewarded, so flight stays roughly straight")
 	public void prefersStraightAhead() {
 		double straight = score(FOOL_X + 9, FOOL_Z, 9, false, false);
-		double sideways = score(FOOL_X, FOOL_Z + 9, 9, false, false);
-		assertTrue(straight > sideways,
-				"straight along the heading should beat a right-angle turn of the same distance");
+		double slight = score(FOOL_X + 8, FOOL_Z + 3, 9, false, false);
+		assertTrue(straight > slight,
+				"straight along the heading should beat even a mild deviation of the same distance");
+	}
+
+	@Test
+	@DisplayName("cover at right angles is rejected outright — breaking off sideways is what circles")
+	public void rejectsSidewaysCover() {
+
+		assertEquals(Double.NEGATIVE_INFINITY, score(FOOL_X, FOOL_Z + 9, 9, true, false),
+				"a right-angle turn for cover, repeated, is a circle");
 	}
 }

@@ -35,19 +35,21 @@ public final class FoolPathfinder {
 	private static final int FALL_BASE_COST = 10;
 	private static final int FALL_PER_BLOCK = 4;
 	private static final int MAX_FALL = 3;
-	private static final int DIG_DOWN_COST = 90;
-	private static final int BREAK_PENALTY = 34;
-	private static final int PILLAR_COST = 24;
-	private static final int BRIDGE_COST = 40;
-	private static final int DIAG_BRIDGE_COST = 50;
+
+	private static final int DIG_DOWN_COST = 26;
+	private static final int BREAK_COST = 14;
+	private static final int PILLAR_COST = 16;
+	private static final int BRIDGE_COST = 18;
+	private static final int DIAG_BRIDGE_COST = 24;
 	private static final int WATER_PENALTY = 12;
 
 	private static final int SWIM_COST = 16;
 	private static final int SWIM_MAX_DEPTH = 5;
 	private static final int HAZARD_NEAR_PENALTY = 40;
-	private static final int DOOR_COST = 6;
+
+	private static final int DOOR_COST = 2;
 	private static final int AVOID_PENALTY = 600;
-	private static final double HEURISTIC_WEIGHT = 1.02;
+	private static final double HEURISTIC_WEIGHT = 2.0;
 
 	private FoolPathfinder() {
 	}
@@ -240,19 +242,15 @@ public final class FoolPathfinder {
 		if (!isBreakable(world, x, y, z)) {
 			return -1.0;
 		}
-		double cost = mineTicks(block) + BREAK_PENALTY;
+		double cost = BREAK_COST;
 		if (isFallingBlock(world, x, y + 1, z)) {
 			cost += 50000.0;
 		}
 		return cost;
 	}
 
-	public static int mineTicks(Block<?> block) {
-		float hardness = block.getHardness();
-		if (hardness < 0.0f) {
-			return Integer.MAX_VALUE;
-		}
-		return Math.max(4, Math.min(70, (int) (hardness * 15.0f)));
+	public static int breakCost() {
+		return BREAK_COST;
 	}
 
 	private static boolean[] playerBuilt;

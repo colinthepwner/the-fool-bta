@@ -7,13 +7,15 @@ Adds a single new mob: the Fool.
 It is rare, it does not keep to the night, and it is not friendly. Beyond that, you are better off
 finding out for yourself.
 
+It also brings two things of its own: **Joxe Dust**, a powder worth laying down, and **Fool's Gold** —
+a bar, a set of tools and a suit of armour, in colours no honest metal comes in.
+
 ---
 
 ## Install
 
-Drop the jar into your `mods` folder. HalpLibe is bundled, so nothing else is required.
-
-No release yet — build it yourself for now (see below).
+Grab the jar from [Releases](https://github.com/colinthepwner/the-fool-bta/releases) and drop it into
+your `mods` folder. HalpLibe is bundled, so nothing else is required.
 
 ## Building
 

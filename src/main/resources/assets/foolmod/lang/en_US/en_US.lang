@@ -1,3 +1,30 @@
 entity.foolmod.fool=The Fool
 subtitles.foolmod.fool.idle=The Fool titters
 subtitles.foolmod.fool.hit=The Fool strikes
+
+# halplibe namespaces item keys, so these are item.<modid>.<name>.name -- not the bare
+# item.<name>.name that vanilla BTA uses for its own items.
+# Joxe Dust is a BLOCK now, so its item is keyed tile.* rather than item.* — placing it was what
+# changed the key and broke the name.
+tile.foolmod.joxe_dust.name=Joxe Dust
+tile.foolmod.joxe_dust.desc=Fairground powder. Laid in an unbroken ring it makes a boundary the Fool dare not cross.
+item.foolmod.fools_gold_ingot.name=Fool's Gold Bar
+item.foolmod.fools_gold_ingot.desc=Worth nothing and good for everything. It will cut anything a diamond will, in its own time.
+item.foolmod.fools_gold_pickaxe.name=Fool's Gold Pickaxe
+item.foolmod.fools_gold_pickaxe.desc=Cuts what a diamond cuts, at its own leisurely pace.
+item.foolmod.fools_gold_axe.name=Fool's Gold Axe
+item.foolmod.fools_gold_axe.desc=Cuts what a diamond cuts, at its own leisurely pace.
+item.foolmod.fools_gold_shovel.name=Fool's Gold Shovel
+item.foolmod.fools_gold_shovel.desc=Cuts what a diamond cuts, at its own leisurely pace.
+item.foolmod.fools_gold_hoe.name=Fool's Gold Hoe
+item.foolmod.fools_gold_hoe.desc=Cuts what a diamond cuts, at its own leisurely pace.
+item.foolmod.fools_gold_sword.name=Fool's Gold Sword
+item.foolmod.fools_gold_sword.desc=Gaudy, and sharper than it has any right to be.
+item.foolmod.fools_gold_helmet.name=Fool's Gold Helmet
+item.foolmod.fools_gold_helmet.desc=Motley worn as armour.
+item.foolmod.fools_gold_chestplate.name=Fool's Gold Chestplate
+item.foolmod.fools_gold_chestplate.desc=Motley worn as armour.
+item.foolmod.fools_gold_leggings.name=Fool's Gold Leggings
+item.foolmod.fools_gold_leggings.desc=Motley worn as armour.
+item.foolmod.fools_gold_boots.name=Fool's Gold Boots
+item.foolmod.fools_gold_boots.desc=Motley worn as armour.

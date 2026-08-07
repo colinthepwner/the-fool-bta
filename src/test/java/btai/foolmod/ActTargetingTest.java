@@ -92,14 +92,11 @@ public class ActTargetingTest {
 	}
 
 	@Test
-	@DisplayName("mining time scales with hardness and never requires a tool")
-	public void mineTimesAreSane() {
-		int dirt = FoolPathfinder.mineTicks(Blocks.DIRT);
-		int stone = FoolPathfinder.mineTicks(Blocks.STONE);
-		int obsidian = FoolPathfinder.mineTicks(Blocks.OBSIDIAN);
-		assertTrue(dirt >= 4, "even the softest block should take a beat: " + dirt);
-		assertTrue(stone > dirt, "stone (" + stone + ") should take longer than dirt (" + dirt + ")");
-		assertTrue(obsidian >= stone, "obsidian (" + obsidian + ") should not be quicker than stone");
-		assertTrue(obsidian <= 70, "nothing should exceed the 70-tick cap: " + obsidian);
+	@DisplayName("breaking is priced as one action, not by hardness, so tunnelling stays viable")
+	public void breakingIsCheapEnoughToChoose() {
+
+		int breakCost = FoolPathfinder.breakCost();
+		assertTrue(breakCost > 10, "a break should cost a little more than a plain walk step: " + breakCost);
+		assertTrue(breakCost < 30, "a break must stay within a few walk steps or it is never chosen: " + breakCost);
 	}
 }
