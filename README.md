@@ -8,7 +8,7 @@ It is rare, it does not keep to the night, and it is not friendly. Beyond that, 
 finding out for yourself.
 
 It also brings two things of its own: **Joxe Dust**, a powder worth laying down, and **Fool's Gold** —
-a bar, a set of tools and a suit of armour, in colours no honest metal comes in.
+a bar, a block, a set of tools and a suit of armour, in colours no honest metal comes in.
 
 ---
 

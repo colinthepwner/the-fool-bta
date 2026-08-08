@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "btai.foolmod.mixin",
+	"compatibilityLevel": "JAVA_${java}",
+	"mixins": [
+		"BlockDropMixin",
+		"WorldTickMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

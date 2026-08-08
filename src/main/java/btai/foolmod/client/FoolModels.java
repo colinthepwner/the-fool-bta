@@ -67,6 +67,11 @@ public class FoolModels implements ModelEntrypoint {
 
 			dispatcher.addDispatch(new JoxeDustModel(FoolBlocks.joxeDust));
 		}
+		if (FoolBlocks.foolsGoldBlock != null) {
+
+			dispatcher.addDispatch(new BlockModelStandard<>(FoolBlocks.foolsGoldBlock)
+					.setAllTextures(FoolMod.MOD_ID + ":block/fools_gold_block"));
+		}
 	}
 
 	@Override

@@ -7,7 +7,9 @@ subtitles.foolmod.fool.hit=The Fool strikes
 # Joxe Dust is a BLOCK now, so its item is keyed tile.* rather than item.* — placing it was what
 # changed the key and broke the name.
 tile.foolmod.joxe_dust.name=Joxe Dust
-tile.foolmod.joxe_dust.desc=Fairground powder. Laid in an unbroken ring it makes a boundary the Fool dare not cross.
+tile.foolmod.joxe_dust.desc=Fairground powder. Draw a closed ring on the ground — your walls can stand in for part of it — and the Fool will not set foot inside.
+tile.foolmod.fools_gold_block.name=Block of Fool's Gold
+tile.foolmod.fools_gold_block.desc=Nine bars of it, stacked. Worth nine times nothing.
 item.foolmod.fools_gold_ingot.name=Fool's Gold Bar
 item.foolmod.fools_gold_ingot.desc=Worth nothing and good for everything. It will cut anything a diamond will, in its own time.
 item.foolmod.fools_gold_pickaxe.name=Fool's Gold Pickaxe

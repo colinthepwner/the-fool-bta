@@ -5,6 +5,7 @@ import btai.foolmod.act.BreakTorchAct;
 import btai.foolmod.act.FoolAct;
 import btai.foolmod.act.StealChestAct;
 import btai.foolmod.act.WoolBuildAct;
+import btai.foolmod.block.FoolBlockDecay;
 import btai.foolmod.block.JoxeWard;
 import btai.foolmod.item.FoolItems;
 import btai.foolmod.path.FoolPathfinder;
@@ -57,10 +58,25 @@ public class FoolEntity extends MobHuman {
 	private static final double STRIKE_RANGE = 3.6;
 
 	private static final double STRIKE_VERTICAL = 2.0;
-	private static final double STRIKE_APPROACH = 9.0;
+	private static final double STRIKE_APPROACH = 14.0;
+
+	private static final int AMBUSH_CHANCE = 30;
+
+	private static final double STRIKE_RESET_DISTANCE = 16.0;
+
+	private static final int UNWATCH_DWELL = 30;
+
+	private static final int SLIP_BEHIND_CHANCE = 2;
+
+	private static final double SLIP_MIN = 6.0;
+	private static final double SLIP_MAX = 13.0;
+	private static final int SLIP_TRIES = 60;
+
+	public static final double SLIP_FAN = 100.0;
 
 	private static final double STRIKE_COMMIT = 4.5;
-	private static final int STRIKE_COOLDOWN = 900;
+
+	private static final int STRIKE_COOLDOWN = 400;
 	private static final int STRIKE_TIMEOUT = 100;
 	private static final int STRIKE_DAMAGE = 2;
 
@@ -78,6 +94,8 @@ public class FoolEntity extends MobHuman {
 
 	private static final int KILL_CREDIT_TICKS = 100;
 
+	private static final int WARD_CHECK_GAP = 5;
+
 	private static final double PUNCH_RANGE = 3.0;
 
 	private static final int PUNCH_COOLDOWN = 30;
@@ -88,6 +106,14 @@ public class FoolEntity extends MobHuman {
 	private static final int ARROW_CHANCE = 70;
 	private static final int ARROW_COOLDOWN_MIN = 300;
 	private static final int ARROW_COOLDOWN_VAR = 400;
+
+	private static final double WEB_RANGE = 4.5;
+
+	private static final double WEB_VERTICAL = 2.0;
+
+	private static final int WEB_CHANCE = 90;
+	private static final int WEB_COOLDOWN_MIN = 500;
+	private static final int WEB_COOLDOWN_VAR = 600;
 
 	private static final int BUILD_NEAR_RADIUS = 48;
 
@@ -145,10 +171,13 @@ public class FoolEntity extends MobHuman {
 	private int fleeBlockedTicks;
 	private int punchCooldown;
 	private int arrowCooldown;
+	private int webCooldown;
+
+	private final WatchLatch watch = new WatchLatch(SPOTTED_DWELL, UNWATCH_DWELL);
+
+	private boolean needsDistance;
 
 	private int lastStruckByTick = Integer.MIN_VALUE;
-
-	private int spottedTicks;
 	private int[] swimTarget;
 	private int swimCommit;
 	private boolean lookedThisTick;
@@ -210,7 +239,8 @@ public class FoolEntity extends MobHuman {
 		this.speed = PROWL_SPEED;
 		this.setSize(0.6f, 1.8f);
 		this.entityData.define(SWING_SLOT, 0, Integer.class);
-		this.strikeCooldown = 200 + this.random.nextInt(400);
+
+		this.strikeCooldown = 100 + this.random.nextInt(200);
 		this.idleSoundTimer = this.random.nextInt(IDLE_SOUND_GAP);
 	}
 
@@ -251,6 +281,12 @@ public class FoolEntity extends MobHuman {
 		if (!this.world.checkIfAABBIsClear(this.bb)
 				|| !this.world.getCubes(this, this.bb).isEmpty()
 				|| this.world.getIsAnyLiquid(this.bb)) {
+			return false;
+		}
+
+		if (!FoolPathfinder.isStandable(this.world, bx, by, bz)
+				|| FoolPathfinder.isWater(this.world, bx, by, bz)
+				|| FoolPathfinder.isWater(this.world, bx, by - 1, bz)) {
 			return false;
 		}
 
@@ -333,6 +369,14 @@ public class FoolEntity extends MobHuman {
 			return;
 		}
 		tickTimers();
+		updateAwareness();
+		if (needsDistance) {
+
+			Player watcher = nearestVictim(-1.0);
+			if (watcher == null || watcher.distanceTo(this) > STRIKE_RESET_DISTANCE) {
+				needsDistance = false;
+			}
+		}
 
 		Player near = nearestVictim(-1.0);
 
@@ -341,7 +385,7 @@ public class FoolEntity extends MobHuman {
 			return;
 		}
 
-		if (this.tickCount % 20 == 0 && JoxeWard.isWarded(this.world,
+		if (this.tickCount % WARD_CHECK_GAP == 0 && JoxeWard.isWarded(this.world,
 				MathHelper.floor(this.x), MathHelper.floor(this.bb.minY), MathHelper.floor(this.z))) {
 			vaporise();
 			return;
@@ -349,6 +393,7 @@ public class FoolEntity extends MobHuman {
 
 		punchIfCrowded(near);
 		maybeShootArrow(near);
+		maybeSpinWeb(near);
 
 		if (leashCheck()) {
 			return;
@@ -370,34 +415,17 @@ public class FoolEntity extends MobHuman {
 			return;
 		}
 
-		if (near != null && isWatchedBy(near)) {
-			spottedTicks++;
-		} else {
-			spottedTicks = 0;
-		}
-		if (spottedTicks >= SPOTTED_DWELL) {
-			spottedTicks = 0;
+		if (watch.believed()) {
 			beginFlee(near);
 			navigationTick();
 			settleLook();
 			return;
 		}
 
-		if (near != null) {
+		if (near != null && strikeCooldown <= 0 && !needsDistance && canEntityBeSeen(near)) {
 			double d = near.distanceTo(this);
-			if (d < PANIC_RANGE) {
 
-				if (strikeCooldown <= 0 && canEntityBeSeen(near) && !isWatchedBy(near)) {
-					beginStrike(near);
-				} else {
-					beginFlee(near);
-				}
-				navigationTick();
-				settleLook();
-				return;
-			}
-			if (strikeCooldown <= 0 && d < STRIKE_APPROACH && canEntityBeSeen(near) && !isWatchedBy(near)
-					&& this.random.nextInt(90) == 0) {
+			if (d < PANIC_RANGE || (d < STRIKE_APPROACH && this.random.nextInt(AMBUSH_CHANCE) == 0)) {
 				beginStrike(near);
 				navigationTick();
 				settleLook();
@@ -430,6 +458,10 @@ public class FoolEntity extends MobHuman {
 		navigationTick();
 	}
 
+	private void updateAwareness() {
+		watch.update(isWatched());
+	}
+
 	private void settleLook() {
 		if (lookedThisTick) {
 			lookedThisTick = false;
@@ -447,6 +479,7 @@ public class FoolEntity extends MobHuman {
 		if (blockActionCooldown > 0) blockActionCooldown--;
 		if (punchCooldown > 0) punchCooldown--;
 		if (arrowCooldown > 0) arrowCooldown--;
+		if (webCooldown > 0) webCooldown--;
 		if (!avoidCells.isEmpty()) {
 			avoidCells.values().removeIf(expiry -> expiry <= this.tickCount);
 		}
@@ -887,15 +920,23 @@ public class FoolEntity extends MobHuman {
 		if (!this.isInWater()) {
 			return false;
 		}
+		int fx = MathHelper.floor(this.x), fy = MathHelper.floor(this.bb.minY), fz = MathHelper.floor(this.z);
 		boolean headUnder = FoolPathfinder.isWater(this.world,
-				MathHelper.floor(this.x), MathHelper.floor(this.y + this.getHeadHeight()), MathHelper.floor(this.z));
-		boolean footing = FoolPathfinder.isStandable(this.world,
-				MathHelper.floor(this.x), MathHelper.floor(this.bb.minY), MathHelper.floor(this.z));
-		if (!headUnder && footing) {
+				fx, MathHelper.floor(this.y + this.getHeadHeight()), fz);
+		boolean footing = FoolPathfinder.isStandable(this.world, fx, fy, fz);
+		boolean drowning = headUnder || !footing;
+		boolean feetWet = FoolPathfinder.isWater(this.world, fx, fy, fz);
+
+		if (!feetWet && !drowning) {
 			return false;
 		}
-		this.isJumping = true;
-		this.speed = FLEE_SPEED_PANIC;
+
+		if (drowning) {
+			this.isJumping = true;
+			this.speed = FLEE_SPEED_PANIC;
+		} else {
+			this.speed = fleeing ? FLEE_SPEED : PROWL_SPEED;
+		}
 
 		if (swimCommit > 0) swimCommit--;
 		if (swimTarget != null && (swimCommit <= 0 || !stillWater(swimTarget))) {
@@ -904,6 +945,11 @@ public class FoolEntity extends MobHuman {
 		if (swimTarget == null && swimCommit <= 0) {
 			swimTarget = nearestDryLand(24);
 			swimCommit = 60;
+		}
+
+		if (swimTarget != null && swimTarget[0] == fx && swimTarget[2] == fz) {
+			swimTarget = null;
+			swimCommit = 0;
 		}
 		if (swimTarget != null) {
 			steerTowardPoint(swimTarget[0] + 0.5, swimTarget[2] + 0.5, this.moveSpeed);
@@ -981,6 +1027,45 @@ public class FoolEntity extends MobHuman {
 		lookAtEntity(target);
 		swing();
 		arrowCooldown = ARROW_COOLDOWN_MIN + this.random.nextInt(ARROW_COOLDOWN_VAR);
+	}
+
+	private void maybeSpinWeb(Player target) {
+		if (target == null || webCooldown > 0 || blockActionCooldown > 0
+				|| this.world == null || this.world.isClientSide) {
+			return;
+		}
+		double dx = target.x - this.x, dz = target.z - this.z;
+		if (dx * dx + dz * dz > WEB_RANGE * WEB_RANGE || Math.abs(target.y - this.y) > WEB_VERTICAL) {
+			return;
+		}
+		if (!canEntityBeSeen(target) || this.random.nextInt(WEB_CHANCE) != 0) {
+			return;
+		}
+		int wx = MathHelper.floor(target.x);
+		int wy = MathHelper.floor(target.bb.minY + 0.1);
+		int wz = MathHelper.floor(target.z);
+
+		if (this.world.getBlockId(wx, wy, wz) != 0 || occupiesCell(wx, wy, wz)) {
+			return;
+		}
+		if (isWardedCell(wx, wy, wz)) {
+			return;
+		}
+		if (!this.world.setBlockWithNotify(wx, wy, wz, Blocks.COBWEB.id())) {
+			return;
+		}
+		placedBlocks.add(FoolPathfinder.packKey(wx, wy, wz));
+		FoolBlockDecay.mark(this.world, wx, wy, wz, Blocks.COBWEB.id(), this.random);
+		this.world.playBlockSoundEffect(null, wx + 0.5, wy + 0.5, wz + 0.5, Blocks.COBWEB,
+				EnumBlockSoundEffectType.PLACE);
+		this.world.playSoundAtEntity(null, this, SOUND_IDLE, 0.9f, 1.4f);
+		spendBlockAction();
+
+		if (!fleeing) {
+			faceBlock(wx, wy, wz);
+		}
+		swing();
+		webCooldown = WEB_COOLDOWN_MIN + this.random.nextInt(WEB_COOLDOWN_VAR);
 	}
 
 	private void punchIfCrowded(Player near) {
@@ -1182,13 +1267,92 @@ public class FoolEntity extends MobHuman {
 					(this.random.nextDouble() - 0.5) * 0.08, 0.02, (this.random.nextDouble() - 0.5) * 0.08, 0, false);
 		}
 
+		if (!leaving && tricksLeft > 0 && this.random.nextInt(SLIP_BEHIND_CHANCE) == 0
+				&& slipBehind(fleeFrom != null && !fleeFrom.removed ? fleeFrom : nearestVictim(-1.0))) {
+			return;
+		}
+
 		this.remove();
+	}
+
+	private boolean slipBehind(Player p) {
+		if (p == null) {
+			return false;
+		}
+		int fy = MathHelper.floor(p.bb.minY);
+		for (int i = 0; i < SLIP_TRIES; i++) {
+
+			double bearing = p.yRot + 180.0 + (this.random.nextDouble() - 0.5) * SLIP_FAN;
+			double dist = SLIP_MIN + this.random.nextDouble() * (SLIP_MAX - SLIP_MIN);
+			double[] spot = pointOnBearing(p.x, p.z, bearing, dist);
+			int tx = MathHelper.floor(spot[0]);
+			int tz = MathHelper.floor(spot[1]);
+			if (!FoolPathfinder.chunkLoaded(this.world, tx, tz)) {
+				continue;
+			}
+			int ty = groundAt(tx, fy, tz);
+			if (ty == Integer.MIN_VALUE) {
+				continue;
+			}
+
+			if (FoolPathfinder.isWater(this.world, tx, ty, tz)
+					|| FoolPathfinder.isWater(this.world, tx, ty - 1, tz)) {
+				continue;
+			}
+
+			if (!behindPlayer(p, tx + 0.5, tz + 0.5)) {
+				continue;
+			}
+			if (JoxeWard.isWarded(this.world, tx, ty, tz)) {
+				return false;
+			}
+			moveTo(tx + 0.5, ty, tz + 0.5, this.random.nextFloat() * 360.0f, 0.0f);
+			this.fallDistance = 0.0f;
+			forgetTheChase();
+			return true;
+		}
+		return false;
+	}
+
+	private boolean behindPlayer(Player p, double px, double pz) {
+		return isBehind(p.x, p.z, p.yRot, px, pz);
+	}
+
+	public static double[] pointOnBearing(double x, double z, double yawDeg, double dist) {
+		double a = Math.toRadians(yawDeg);
+		return new double[]{x - Math.sin(a) * dist, z + Math.cos(a) * dist};
+	}
+
+	public static boolean isBehind(double playerX, double playerZ, double playerYaw, double px, double pz) {
+		double yaw = Math.toRadians(playerYaw);
+		double lookX = -Math.sin(yaw), lookZ = Math.cos(yaw);
+		double dx = px - playerX, dz = pz - playerZ;
+		double len = Math.sqrt(dx * dx + dz * dz);
+		return len >= 1.0E-4 && (dx / len) * lookX + (dz / len) * lookZ < 0.0;
+	}
+
+	private void forgetTheChase() {
+		fleeing = false;
+		striking = false;
+		setSprinting(false);
+		this.speed = PROWL_SPEED;
+		fleeTicks = 0;
+		seenThisFlight = false;
+		coverSpot = null;
+		fleeHeadX = 0.0;
+		fleeHeadZ = 0.0;
+		swimTarget = null;
+		swimCommit = 0;
+		needsDistance = false;
+		watch.reset();
+		clearPath();
 	}
 
 	private void beginStrike(Player target) {
 		striking = true;
 		strikeTicks = 0;
 		strikeTarget = target;
+		needsDistance = true;
 		act = null;
 		clearPath();
 	}
@@ -1206,9 +1370,9 @@ public class FoolEntity extends MobHuman {
 		double d = Math.sqrt(dx * dx + dz * dz);
 		double dy = Math.abs(target.y - this.y);
 
-		if (d > STRIKE_COMMIT && isWatchedBy(target)) {
+		if (d > STRIKE_COMMIT && watch.believed()) {
 			striking = false;
-			strikeCooldown = STRIKE_COOLDOWN / 2;
+			strikeCooldown = STRIKE_COOLDOWN;
 			beginFlee(target);
 			return;
 		}
@@ -1367,12 +1531,15 @@ public class FoolEntity extends MobHuman {
 		}
 
 		int[] node = navPath.get(navIndex);
+
 		if (node[3] == FoolPathfinder.PILLAR) {
 			pillarTick(node);
+			stuckCheck();
 			return;
 		}
 		if (node[3] == FoolPathfinder.BRIDGE) {
 			bridgeTick(node);
+			stuckCheck();
 			return;
 		}
 
@@ -1522,11 +1689,16 @@ public class FoolEntity extends MobHuman {
 		int floorY = node[1] - 1;
 
 		if (FoolPathfinder.isSolid(this.world, px, floorY, pz)) {
+			placeFails = 0;
+
+			if (pillarNodeDone(this.onGround, this.bb.minY, node[1])) {
+				navIndex++;
+				return;
+			}
 
 			if (this.onGround) {
 				this.isJumping = true;
 			}
-			placeFails = 0;
 			return;
 		}
 
@@ -1552,12 +1724,28 @@ public class FoolEntity extends MobHuman {
 		}
 	}
 
+	public static boolean pillarNodeDone(boolean onGround, double feetY, int nodeY) {
+		return onGround && feetY >= nodeY - 0.1;
+	}
+
+	public static boolean bridgeNodeDone(double foolX, double feetY, double foolZ,
+			int nodeX, int nodeY, int nodeZ) {
+		double dx = nodeX + 0.5 - foolX;
+		double dz = nodeZ + 0.5 - foolZ;
+		return dx * dx + dz * dz < 0.36 && Math.abs(feetY - (double) nodeY) < 0.6;
+	}
+
 	private void bridgeTick(int[] node) {
 		int bx = node[0];
 		int bz = node[2];
 		int floorY = node[1] - 1;
 		if (FoolPathfinder.isSolid(this.world, bx, floorY, bz)) {
 			placeFails = 0;
+
+			if (bridgeNodeDone(this.x, this.bb.minY, this.z, bx, node[1], bz)) {
+				navIndex++;
+				return;
+			}
 			steerToward(bx, bz, this.moveSpeed * 0.7f);
 			return;
 		}
@@ -1864,6 +2052,7 @@ public class FoolEntity extends MobHuman {
 
 		woolRed = !woolRed;
 		placedBlocks.add(FoolPathfinder.packKey(x, y, z));
+		FoolBlockDecay.mark(this.world, x, y, z, Blocks.WOOL.id(), this.random);
 		this.world.playBlockSoundEffect(null, x + 0.5, y + 0.5, z + 0.5, Blocks.WOOL, EnumBlockSoundEffectType.PLACE);
 		spendBlockAction();
 		faceBlock(x, y, z);

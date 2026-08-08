@@ -41,6 +41,11 @@ public final class FakeWorld {
 			int cx = inv.getArgument(0), cz = inv.getArgument(1);
 			return !unloadedChunks.contains(chunkKey(cx, cz));
 		});
+
+		when(world.setBlockWithNotify(anyInt(), anyInt(), anyInt(), anyInt())).thenAnswer(inv -> {
+			setId(inv.getArgument(0), inv.getArgument(1), inv.getArgument(2), inv.getArgument(3));
+			return true;
+		});
 	}
 
 	private static long key(int x, int y, int z) {
@@ -56,6 +61,15 @@ public final class FakeWorld {
 			blocks.remove(key(x, y, z));
 		} else {
 			blocks.put(key(x, y, z), block.id());
+		}
+		return this;
+	}
+
+	public FakeWorld setId(int x, int y, int z, int id) {
+		if (id == 0) {
+			blocks.remove(key(x, y, z));
+		} else {
+			blocks.put(key(x, y, z), id);
 		}
 		return this;
 	}

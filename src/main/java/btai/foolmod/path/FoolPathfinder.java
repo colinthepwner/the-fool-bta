@@ -43,7 +43,7 @@ public final class FoolPathfinder {
 	private static final int DIAG_BRIDGE_COST = 24;
 	private static final int WATER_PENALTY = 12;
 
-	private static final int SWIM_COST = 16;
+	private static final int SWIM_COST = 60;
 	private static final int SWIM_MAX_DEPTH = 5;
 	private static final int HAZARD_NEAR_PENALTY = 40;
 
