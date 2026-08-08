@@ -14,4 +14,9 @@ public class WorldTickMixin {
 	private void foolmod$decayPlacedBlocks(CallbackInfo ci) {
 		FoolBlockDecay.tick((World) (Object) this);
 	}
+
+	@Inject(method = "saveWorldIndirectly", at = @At("HEAD"))
+	private void foolmod$sweepBeforeSaving(CallbackInfo ci) {
+		FoolBlockDecay.sweep((World) (Object) this);
+	}
 }

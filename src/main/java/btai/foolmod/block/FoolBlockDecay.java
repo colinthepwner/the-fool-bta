@@ -45,6 +45,26 @@ public final class FoolBlockDecay {
 		return true;
 	}
 
+	public static void sweep(World world) {
+		if (world == null || world.isClientSide) {
+			return;
+		}
+		Map<Long, int[]> pending;
+		synchronized (PENDING) {
+			pending = PENDING.remove(world);
+		}
+		if (pending == null) {
+			return;
+		}
+		for (Map.Entry<Long, int[]> entry : pending.entrySet()) {
+			long k = entry.getKey();
+			int x = unpackX(k), y = unpackY(k), z = unpackZ(k);
+			if (world.getBlockId(x, y, z) == entry.getValue()[1]) {
+				world.setBlockWithNotify(x, y, z, 0);
+			}
+		}
+	}
+
 	public static void tick(World world) {
 		if (world == null || world.isClientSide) {
 			return;

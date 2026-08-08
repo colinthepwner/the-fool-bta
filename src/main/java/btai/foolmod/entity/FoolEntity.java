@@ -951,6 +951,12 @@ public class FoolEntity extends MobHuman {
 			swimTarget = null;
 			swimCommit = 0;
 		}
+
+		if (this.horizontalCollision
+				|| (swimTarget != null && swimTarget[1] > MathHelper.floor(this.bb.minY))) {
+			this.isJumping = true;
+		}
+
 		if (swimTarget != null) {
 			steerTowardPoint(swimTarget[0] + 0.5, swimTarget[2] + 0.5, this.moveSpeed);
 		} else if (fleeHeadX != 0.0 || fleeHeadZ != 0.0) {

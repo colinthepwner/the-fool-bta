@@ -103,6 +103,47 @@ class FoolBlockDecayTest {
 	}
 
 	@Test
+	@DisplayName("putting the world away takes every last one with it")
+	void sweepClearsEverythingStillStanding() {
+		FakeWorld w = new FakeWorld();
+		Random random = new Random(13);
+		for (int i = 0; i < 12; i++) {
+			w.set(i, 70, 0, Blocks.WOOL);
+			FoolBlockDecay.mark(w.world, i, 70, 0, Blocks.WOOL.id(), random);
+		}
+		FoolBlockDecay.sweep(w.world);
+		for (int i = 0; i < 12; i++) {
+			assertTrue(w.isAir(i, 70, 0), "wool at " + i + " would have been written into the save");
+		}
+	}
+
+	@Test
+	@DisplayName("the sweep leaves everybody else's blocks alone")
+	void sweepIsNotIndiscriminate() {
+		FakeWorld w = new FakeWorld();
+		w.set(0, 70, 0, Blocks.WOOL);
+		FoolBlockDecay.mark(w.world, 0, 70, 0, Blocks.WOOL.id(), new Random(2));
+		w.set(1, 70, 0, Blocks.WOOL);
+		w.set(0, 70, 0, Blocks.PLANKS_OAK);
+
+		FoolBlockDecay.sweep(w.world);
+		assertEquals(Blocks.WOOL.id(), w.idAt(1, 70, 0), "took a block it never placed");
+		assertEquals(Blocks.PLANKS_OAK.id(), w.idAt(0, 70, 0), "took what was built over its own");
+	}
+
+	@Test
+	@DisplayName("a swept world forgets its book, so a second sweep does nothing")
+	void sweepIsIdempotent() {
+		FakeWorld w = new FakeWorld();
+		w.set(5, 70, 5, Blocks.WOOL);
+		FoolBlockDecay.mark(w.world, 5, 70, 5, Blocks.WOOL.id(), new Random(4));
+		FoolBlockDecay.sweep(w.world);
+		w.set(5, 70, 5, Blocks.WOOL);
+		FoolBlockDecay.sweep(w.world);
+		assertEquals(Blocks.WOOL.id(), w.idAt(5, 70, 5), "a stale book ate a block placed later");
+	}
+
+	@Test
 	@DisplayName("the client is not allowed to decay anything")
 	void clientSideIsLeftToTheServer() {
 		FakeWorld w = new FakeWorld();
