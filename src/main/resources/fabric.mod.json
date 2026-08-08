@@ -32,6 +32,9 @@
 		],
 		"initModels": [
 			"btai.foolmod.client.FoolModels"
+		],
+		"recipesReady": [
+			"btai.foolmod.item.FoolRecipes"
 		]
 	},
 	"mixins": [

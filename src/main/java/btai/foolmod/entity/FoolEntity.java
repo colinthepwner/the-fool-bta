@@ -68,8 +68,8 @@ public class FoolEntity extends MobHuman {
 
 	private static final int SLIP_BEHIND_CHANCE = 2;
 
-	private static final double SLIP_MIN = 6.0;
-	private static final double SLIP_MAX = 13.0;
+	private static final double SLIP_MIN = 4.0;
+	private static final double SLIP_MAX = 9.0;
 	private static final int SLIP_TRIES = 60;
 
 	public static final double SLIP_FAN = 100.0;
@@ -1309,6 +1309,8 @@ public class FoolEntity extends MobHuman {
 			moveTo(tx + 0.5, ty, tz + 0.5, this.random.nextFloat() * 360.0f, 0.0f);
 			this.fallDistance = 0.0f;
 			forgetTheChase();
+
+			beginStrike(p);
 			return true;
 		}
 		return false;
@@ -1574,8 +1576,9 @@ public class FoolEntity extends MobHuman {
 			if (Math.abs(dirX) / dirLen > 0.38) stepX = dirX > 0.0 ? 1 : -1;
 			if (Math.abs(dirZ) / dirLen > 0.38) stepZ = dirZ > 0.0 ? 1 : -1;
 		}
-		int fx = MathHelper.floor(this.x) + stepX;
-		int fz = MathHelper.floor(this.z) + stepZ;
+		int[] ahead = obstructingCell(stepX, stepZ, feetY);
+		int fx = ahead[0];
+		int fz = ahead[1];
 		boolean forwardFeetSolid = (stepX != 0 || stepZ != 0) && FoolPathfinder.blocksMotion(this.world, fx, feetY, fz);
 		boolean forwardHeadSolid = (stepX != 0 || stepZ != 0) && FoolPathfinder.blocksMotion(this.world, fx, feetY + 1, fz);
 
@@ -1628,6 +1631,21 @@ public class FoolEntity extends MobHuman {
 			return;
 		}
 		this.isJumping = true;
+	}
+
+	private int[] obstructingCell(int stepX, int stepZ, int feetY) {
+		int bx = MathHelper.floor(this.x), bz = MathHelper.floor(this.z);
+		int[][] candidates = {{bx + stepX, bz + stepZ}, {bx + stepX, bz}, {bx, bz + stepZ}};
+		for (int[] c : candidates) {
+			if (c[0] == bx && c[1] == bz) {
+				continue;
+			}
+			if (FoolPathfinder.blocksMotion(this.world, c[0], feetY, c[1])
+					|| FoolPathfinder.blocksMotion(this.world, c[0], feetY + 1, c[1])) {
+				return c;
+			}
+		}
+		return new int[]{bx + stepX, bz + stepZ};
 	}
 
 	private void handleWedged(int fx, int feetY, int fz) {
